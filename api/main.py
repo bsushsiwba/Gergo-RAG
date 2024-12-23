@@ -52,6 +52,10 @@ groq_chat = ChatGroq(
 
 system_prompt = 'You are a friendly conversational chatbot who responds in the language of the user.'
 
+@app.get("/")
+async def welcome():
+    return "The site is running correctly, use chat endpoint."
+
 @app.post("/chat", response_model=ChatResponse)
 def chat_endpoint(request: ChatRequest):
     global chat_contexts
