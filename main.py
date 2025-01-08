@@ -103,4 +103,3 @@ def chat_endpoint(request: ChatRequest):
         del chat_contexts[oldest_context_id]
 
     return ChatResponse(id=chat_id, response=response)
-
