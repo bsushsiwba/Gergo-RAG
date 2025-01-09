@@ -1,7 +1,9 @@
 import os
 import uuid
-from fastapi import FastAPI, HTTPException, Query
+from dotenv import load_dotenv
+from fastapi import FastAPI, HTTPException, Query, Depends
 from pydantic import BaseModel
+import logging
 from langchain.chains import LLMChain
 from langchain_core.prompts import (
     ChatPromptTemplate,
@@ -12,7 +14,18 @@ from langchain_core.messages import SystemMessage
 from langchain.chains.conversation.memory import ConversationBufferWindowMemory
 from langchain_groq import ChatGroq
 from langdetect import detect
+from pymongo import MongoClient, errors
 from utils.get_context import fetch_top_result
+from utils.chat_log import chat_log
+
+# Load environment variables from .env file
+load_dotenv()
+
+# MongoDB connection string from environment variables
+CONNECTION_STRING = os.getenv("MONGODB_CONN_STR")
+
+# Error codes
+ERROR_CODE_CONNECTION_FAILED = "ERR_CONNECTION_FAILED"
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -20,6 +33,23 @@ app = FastAPI()
 # Chat contexts
 chat_contexts = {}
 MAX_CONTEXTS = 5
+
+# MongoDB client
+client = None
+
+
+def get_mongo_client():
+    """Get the MongoDB client, reconnecting if necessary."""
+    global client
+    if client is None or not client.admin.command("ping"):
+        try:
+            logging.info("Connecting to MongoDB cluster...")
+            client = MongoClient(CONNECTION_STRING)
+            logging.info("Successfully connected to MongoDB cluster.")
+        except errors.PyMongoError as e:
+            logging.error(f"Failed to connect to MongoDB: {e}")
+            raise HTTPException(status_code=500, detail="Database connection failed")
+    return client
 
 
 def detect_language(text):
@@ -30,13 +60,11 @@ def detect_language(text):
         return "en"  # Default to English if detection fails
 
 
-def find_answer_in_knowledge_base(question, language):
+def find_answer_in_knowledge_base(client, question):
     """Search for an exact match in the knowledge base."""
-    result, error_code = fetch_top_result(
-        question,
-    )
+    result, error_code = fetch_top_result(client, question)
     if error_code:
-        return None
+        return ["", None]
     else:
         return result
 
@@ -49,6 +77,7 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     id: str
     response: str
+    question_id: str = None
 
 
 # Get Groq API key and model
@@ -59,20 +88,47 @@ groq_chat = ChatGroq(groq_api_key=groq_api_key, model_name=model)
 system_prompt = "You are a friendly conversational chatbot who responds in the language of the user."
 
 
+@app.on_event("startup")
+async def startup_event():
+    """Establish database connection on app startup."""
+    global client
+    try:
+        logging.info("Connecting to MongoDB cluster for logging chat")
+        client = MongoClient(CONNECTION_STRING)
+        logging.info("Successfully connected to MongoDB cluster.")
+    except errors.PyMongoError as e:
+        logging.error(f"Failed to connect to MongoDB during startup: {e}")
+        client = None
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Close database connection on app shutdown."""
+    global client
+    if client:
+        client.close()
+        logging.info("MongoDB connection closed.")
+        client = None
+
+
 @app.get("/")
 async def welcome():
     return "The site is running correctly, use chat endpoint."
 
 
 @app.post("/chat", response_model=ChatResponse)
-def chat_endpoint(request: ChatRequest):
+def chat_endpoint(
+    request: ChatRequest, db_client: MongoClient = Depends(get_mongo_client)
+):
     global chat_contexts
 
     # Detect language
     language = detect_language(request.question)
 
     # Check knowledge base for predefined answer
-    predefined_answer = find_answer_in_knowledge_base(request.question, language)
+    question_id, predefined_answer = find_answer_in_knowledge_base(
+        db_client, request.question
+    )
     if predefined_answer:
         response = predefined_answer
         # Ensure chat_id is set if predefined answer is found
@@ -112,4 +168,7 @@ def chat_endpoint(request: ChatRequest):
         oldest_context_id = list(chat_contexts.keys())[0]
         del chat_contexts[oldest_context_id]
 
-    return ChatResponse(id=chat_id, response=response)
+    # Log the response in the database
+    chat_log(db_client, request.question, response, chat_id, question_id)
+
+    return ChatResponse(id=chat_id, response=response, question_id=question_id)

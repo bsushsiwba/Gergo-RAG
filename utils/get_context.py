@@ -1,7 +1,6 @@
 import os
 import logging
 from pymongo import MongoClient
-from dotenv import load_dotenv
 
 # MongoDB database and collection
 DATABASE_NAME = "RAG-index"
@@ -14,15 +13,8 @@ SCORE_THRESHOLD = 2
 SORT_ORDER = -1
 LIMIT = 1
 
-# Load environment variables from .env file
-load_dotenv()
-
-# MongoDB connection string from environment variables
-CONNECTION_STRING = os.getenv("MONGODB_CONN_STR")
-
 # Error codes
 ERROR_CODE_NO_RESULTS = "ERR_NO_RESULTS"
-ERROR_CODE_CONNECTION_FAILED = "ERR_CONNECTION_FAILED"
 
 # Configure logging
 logging.basicConfig(
@@ -32,7 +24,7 @@ logging.basicConfig(
 )
 
 
-def fetch_top_result(question):
+def fetch_top_result(client, question):
     """
     Fetches the top result for a question using MongoDB aggregation pipeline.
 
@@ -44,14 +36,6 @@ def fetch_top_result(question):
             - result: [id, answer] if found, else None.
             - error_code: None if successful, or error code string.
     """
-    try:
-        # Log MongoDB connection attempt
-        logging.info("Connecting to MongoDB cluster...")
-        client = MongoClient(CONNECTION_STRING)
-        logging.info("Successfully connected to MongoDB cluster.")
-    except Exception as e:
-        logging.error(f"Failed to connect to MongoDB: {e}")
-        return None, ERROR_CODE_CONNECTION_FAILED
 
     try:
         # Access the database and collection
