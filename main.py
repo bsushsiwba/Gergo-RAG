@@ -1,4 +1,3 @@
-from context import *
 import os
 import uuid
 from fastapi import FastAPI, HTTPException, Query
@@ -13,6 +12,7 @@ from langchain_core.messages import SystemMessage
 from langchain.chains.conversation.memory import ConversationBufferWindowMemory
 from langchain_groq import ChatGroq
 from langdetect import detect
+from utils.get_context import fetch_top_result
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -21,6 +21,7 @@ app = FastAPI()
 chat_contexts = {}
 MAX_CONTEXTS = 5
 
+
 def detect_language(text):
     """Detect the language of the input text."""
     try:
@@ -28,33 +29,40 @@ def detect_language(text):
     except Exception:
         return "en"  # Default to English if detection fails
 
+
 def find_answer_in_knowledge_base(question, language):
     """Search for an exact match in the knowledge base."""
-    if question in knowledge_base:
-        return knowledge_base[question]
-    return None
+    result, error_code = fetch_top_result(
+        question,
+    )
+    if error_code:
+        return None
+    else:
+        return result
+
 
 class ChatRequest(BaseModel):
     question: str
     id: str = None
 
+
 class ChatResponse(BaseModel):
     id: str
     response: str
 
-# Get Groq API key and model
-groq_api_key = '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'
-model = 'llama3-8b-8192'
-groq_chat = ChatGroq(
-    groq_api_key=groq_api_key, 
-    model_name=model
-)
 
-system_prompt = 'You are a friendly conversational chatbot who responds in the language of the user.'
+# Get Groq API key and model
+groq_api_key = "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"
+model = "llama3-8b-8192"
+groq_chat = ChatGroq(groq_api_key=groq_api_key, model_name=model)
+
+system_prompt = "You are a friendly conversational chatbot who responds in the language of the user."
+
 
 @app.get("/")
 async def welcome():
     return "The site is running correctly, use chat endpoint."
+
 
 @app.post("/chat", response_model=ChatResponse)
 def chat_endpoint(request: ChatRequest):
@@ -74,7 +82,9 @@ def chat_endpoint(request: ChatRequest):
         chat_id = request.id
         if not chat_id or chat_id not in chat_contexts:
             chat_id = str(uuid.uuid4())
-            memory = ConversationBufferWindowMemory(k=5, memory_key="chat_history", return_messages=True)
+            memory = ConversationBufferWindowMemory(
+                k=5, memory_key="chat_history", return_messages=True
+            )
             chat_contexts[chat_id] = memory
         else:
             memory = chat_contexts[chat_id]
