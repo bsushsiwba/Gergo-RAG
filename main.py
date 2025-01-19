@@ -172,3 +172,18 @@ def chat_endpoint(
     chat_log(db_client, request.question, response, chat_id, question_id)
 
     return ChatResponse(id=chat_id, response=response, question_id=question_id)
+
+
+# endpoint to get all chat logs
+@app.get("/chat_logs")
+def get_chat_logs(db_client: MongoClient = Depends(get_mongo_client)):
+    db = db_client["RAG-index"]
+    collection = db["Chat-Logs"]
+    logs = list(collection.find())
+
+    # convert to json and return
+    json_logs = []
+    for log in logs:
+        log["_id"] = str(log["_id"])
+        json_logs.append(log)
+    return json_logs
