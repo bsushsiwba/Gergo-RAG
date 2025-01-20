@@ -1,8 +1,12 @@
 import logging
-from constants import DB_NAME, MULTILINGUAL_QUESTIONS_COLLECTION
+from constants import (
+    DB_NAME,
+    MULTILINGUAL_QUESTIONS_COLLECTION,
+    MULTILINGUAL_QUESTIONS_INDEX,
+)
 
 # MongoDB Atlas Search parameters
-SEARCH_INDEX = "default"
+
 SEARCH_PATH = "*"
 SCORE_THRESHOLD = 2
 SORT_ORDER = -1
@@ -53,7 +57,7 @@ def fetch_top_result(client, question):
         pipeline = [
             {
                 "$search": {
-                    "index": SEARCH_INDEX,
+                    "index": MULTILINGUAL_QUESTIONS_INDEX,
                     "text": {"query": question, "path": {"wildcard": SEARCH_PATH}},
                 }
             },

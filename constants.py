@@ -28,3 +28,9 @@ MAX_CONTEXTS = 5
 DB_NAME = "RAG-index"
 CHAT_LOGS_COLLECTION = "Chat-Logs"
 MULTILINGUAL_QUESTIONS_COLLECTION = "Multilingual-Questions"
+UNANSWERED_QUESTIONS_COLLECTION = "Unanswered-Questions"
+REVIEW_QUESTIONS_COLLECTION = "Review-Questions"
+
+# DB Indexes
+MULTILINGUAL_QUESTIONS_INDEX = "multilingual_questions_index"
+UNANSWERED_QUESTIONS_INDEX = "unanswered_questions_index"

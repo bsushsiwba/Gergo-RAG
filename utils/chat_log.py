@@ -18,7 +18,7 @@ def chat_log(client, question, answer, chat_id, question_id):
         question (str): The question asked by the user.
         answer (str): The answer provided.
         chat_id (str): The unique chat session ID.
-        question_id (str): The ID of the question.
+        referenced_question_id (str): The ID of the question.
 
     Returns:
         None
@@ -37,7 +37,7 @@ def chat_log(client, question, answer, chat_id, question_id):
             "question": question,
             "answer": answer,
             "chat_id": chat_id,
-            "question_id": question_id,
+            "refernced_question_id": question_id,
             "timestamp": datetime.utcnow(),
         }
 

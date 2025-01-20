@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from constants import CONNECTION_STRING
 from pymongo import MongoClient, errors
 import logging
+from utils.databse_schema import check_and_create_db_schema
 
 from routers import chat
 from routers import get_chat_logs
@@ -18,6 +19,9 @@ async def startup_event():
         logging.info("Connecting to MongoDB cluster for logging chat")
         client = MongoClient(CONNECTION_STRING)
         logging.info("Successfully connected to MongoDB cluster.")
+
+        # check for database Schema and create if not exists
+        check_and_create_db_schema(client)
     except errors.PyMongoError as e:
         logging.error(f"Failed to connect to MongoDB during startup: {e}")
         client = None
