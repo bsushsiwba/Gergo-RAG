@@ -1,9 +1,6 @@
 import logging
 from constants import DB_NAME, MULTILINGUAL_QUESTIONS_COLLECTION
 
-# MongoDB database and collection
-COLLECTION_NAME = "Multilingual-Questions"
-
 # MongoDB Atlas Search parameters
 SEARCH_INDEX = "default"
 SEARCH_PATH = "*"
@@ -78,7 +75,7 @@ def fetch_top_result(client, question):
         else:
             logging.warning("No results found with a score above the threshold.")
             logging.info("Adding the question to unanswered questions.")
-            
+
             return None, ERROR_CODE_NO_RESULTS
 
     except Exception as e:
