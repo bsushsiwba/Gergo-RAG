@@ -1,9 +1,7 @@
-import os
 import logging
-from pymongo import MongoClient
+from constants import DB_NAME, MULTILINGUAL_QUESTIONS_COLLECTION
 
 # MongoDB database and collection
-DATABASE_NAME = "RAG-index"
 COLLECTION_NAME = "Multilingual-Questions"
 
 # MongoDB Atlas Search parameters
@@ -49,10 +47,10 @@ def fetch_top_result(client, question):
     try:
         # Access the database and collection
         logging.info(
-            f"Accessing database: {DATABASE_NAME}, collection: {COLLECTION_NAME}."
+            f"Accessing database: {DB_NAME}, collection: {MULTILINGUAL_QUESTIONS_COLLECTION}."
         )
-        db = client[DATABASE_NAME]
-        collection = db[COLLECTION_NAME]
+        db = client[DB_NAME]
+        collection = db[MULTILINGUAL_QUESTIONS_COLLECTION]
 
         # Define the aggregation pipeline
         pipeline = [
@@ -79,6 +77,8 @@ def fetch_top_result(client, question):
             return [str(top_result["_id"]), top_result.get("answer", None)], None
         else:
             logging.warning("No results found with a score above the threshold.")
+            logging.info("Adding the question to unanswered questions.")
+            
             return None, ERROR_CODE_NO_RESULTS
 
     except Exception as e:

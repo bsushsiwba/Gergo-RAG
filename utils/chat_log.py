@@ -1,8 +1,6 @@
 import logging
 from datetime import datetime
-
-DATABASE_NAME = "RAG-index"
-CHAT_LOGS_COLLECTION = "Chat-Logs"
+from constants import DB_NAME, CHAT_LOGS_COLLECTION
 
 # Configure logging
 logging.basicConfig(
@@ -29,9 +27,9 @@ def chat_log(client, question, answer, chat_id, question_id):
     try:
         # Access the database and collection
         logging.info(
-            f"Accessing database: {DATABASE_NAME}, collection: {CHAT_LOGS_COLLECTION}."
+            f"Accessing database: {DB_NAME}, collection: {CHAT_LOGS_COLLECTION}."
         )
-        db = client[DATABASE_NAME]
+        db = client[DB_NAME]
         collection = db[CHAT_LOGS_COLLECTION]
 
         # Prepare the chat log entry

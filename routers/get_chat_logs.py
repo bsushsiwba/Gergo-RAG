@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from utils.mongo_client import get_mongo_client
 from typing import List, Optional
 from pymongo import MongoClient
+from constants import DB_NAME, CHAT_LOGS_COLLECTION
 
 router = APIRouter()
 
@@ -11,7 +12,7 @@ router = APIRouter()
     "/get_chat_logs",
     summary="Retrieve chat logs from the past X hours or all",
     description=(
-        "Fetches chat logs stored in the MongoDB database under the `RAG-index` database and `Chat-Logs` collection. "
+        "Fetches chat logs stored in the MongoDB database under the defined database and `Chat-Logs` collection. "
         "If the `hours` query parameter is provided, only logs from the past `hours` number of hours are returned. "
         "Otherwise, all chat logs are fetched."
     ),
@@ -80,8 +81,8 @@ def get_chat_logs(
     ),
     db_client: MongoClient = Depends(get_mongo_client),
 ):
-    db = db_client["RAG-index"]
-    collection = db["Chat-Logs"]
+    db = db_client[DB_NAME]
+    collection = db[CHAT_LOGS_COLLECTION]
 
     query = {}
     if hours is not None:

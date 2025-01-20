@@ -23,3 +23,8 @@ MODEL = "llama3-8b-8192"
 
 # Maximum number of chats to store for different users
 MAX_CONTEXTS = 5
+
+# DB Constants
+DB_NAME = "RAG-index"
+CHAT_LOGS_COLLECTION = "Chat-Logs"
+MULTILINGUAL_QUESTIONS_COLLECTION = "Multilingual-Questions"

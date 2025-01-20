@@ -130,7 +130,7 @@ def chat_endpoint(
 
         response = conversation.predict(human_input=request.question)
 
-    # Maintain only the 5 most recent contexts
+    # Maintain only defined maximum contexts
     if len(chat_contexts) > MAX_CONTEXTS:
         oldest_context_id = list(chat_contexts.keys())[0]
         del chat_contexts[oldest_context_id]
