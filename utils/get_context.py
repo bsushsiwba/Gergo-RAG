@@ -24,6 +24,15 @@ logging.basicConfig(
 )
 
 
+def find_answer_in_knowledge_base(client, question):
+    """Search for an exact match in the knowledge base."""
+    result, error_code = fetch_top_result(client, question)
+    if error_code:
+        return ["", None]
+    else:
+        return result
+
+
 def fetch_top_result(client, question):
     """
     Fetches the top result for a question using MongoDB aggregation pipeline.

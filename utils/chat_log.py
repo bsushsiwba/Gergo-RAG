@@ -1,6 +1,4 @@
-import os
 import logging
-from pymongo import MongoClient
 from datetime import datetime
 
 DATABASE_NAME = "RAG-index"
