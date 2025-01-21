@@ -67,25 +67,39 @@ def create_multilingual_question(
         translations = translate_to_all_languages(data)
 
         # Prepare the document to insert
-        document = {
-            "en_question": translations.get("en_question"),
-            "en_answer": translations.get("en_answer"),
-            "hu_question": translations.get("hu_question"),
-            "hu_answer": translations.get("hu_answer"),
-            "de_question": translations.get("de_question"),
-            "de_answer": translations.get("de_answer"),
+        document_en = {
+            "question": translations.get("en_question"),
+            "answer": translations.get("en_answer"),
             "references": request.references or [],
             "timestamp": datetime.utcnow(),
         }
 
-        inserted = multilingual_questions.insert_one(document)
+        document_hu = {
+            "question": translations.get("hu_question"),
+            "answer": translations.get("hu_answer"),
+            "references": request.references or [],
+            "timestamp": datetime.utcnow(),
+        }
+
+        document_de = {
+            "question": translations.get("de_question"),
+            "answer": translations.get("de_answer"),
+            "references": request.references or [],
+            "timestamp": datetime.utcnow(),
+        }
+
+        inserted_en = multilingual_questions.insert_one(document_en)
+        inserted_hu = multilingual_questions.insert_one(document_hu)
+        inserted_de = multilingual_questions.insert_one(document_de)
 
         # update the index of the collection
         update_index(multilingual_questions, MULTILINGUAL_QUESTIONS_INDEX)
 
         return {
             "detail": "Multilingual question created successfully.",
-            "id": str(inserted.inserted_id),
+            "en_id": str(inserted_en.inserted_id),
+            "hu_id": str(inserted_hu.inserted_id),
+            "de_id": str(inserted_de.inserted_id),
         }
     except Exception as e:
         raise HTTPException(
