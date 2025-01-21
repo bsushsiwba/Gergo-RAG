@@ -4,7 +4,7 @@ from pymongo import MongoClient, errors
 import logging
 from utils.databse_schema import check_and_create_db_schema
 
-from routers import home, chat, get_chat_logs
+from routers import home, chat, get_chat_logs, review_chat
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -46,3 +46,6 @@ app.include_router(chat.router)
 
 # Include the get_chat_logs router
 app.include_router(get_chat_logs.router)
+
+# include the review_chat router
+app.include_router(review_chat.router)

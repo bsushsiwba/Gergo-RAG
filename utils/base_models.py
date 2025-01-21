@@ -1,5 +1,12 @@
 # This file defines all the base models for the fastapi
+
 from pydantic import BaseModel, Field
+
+
+class RateChatRequest(BaseModel):
+    log_id: str = Field(
+        ..., description="The ID of the chat log to be reviewed."
+    )  # This file defines all the base models for the fastapi
 
 
 class ChatRequest(BaseModel):
