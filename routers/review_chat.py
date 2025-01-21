@@ -41,10 +41,10 @@ router = APIRouter()
     tags=["Review Chat"],
 )
 def rate_chat_endpoint(
-    request: RateChatRequest, db_client: MongoClient = Depends(get_mongo_client)
+    request: RateChatRequest, client: MongoClient = Depends(get_mongo_client)
 ):
     try:
-        db = db_client[DB_NAME]
+        db = client[DB_NAME]
         chat_logs = db[CHAT_LOGS_COLLECTION]
         review_questions = db[REVIEW_QUESTIONS_COLLECTION]
 

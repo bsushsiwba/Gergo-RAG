@@ -4,7 +4,7 @@ from pymongo import MongoClient, errors
 import logging
 from utils.databse_schema import check_and_create_db_schema
 
-from routers import home, chat, get_chat_logs, review_chat, delete_docs
+from routers import home, chat, get_chat_logs, review_chat, delete_docs, add_context
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -39,10 +39,11 @@ async def shutdown_event():
 # include home router
 app.include_router(home.router)
 
+# include add_context router
+app.include_router(add_context.router)
 
 # Include the chat router
 app.include_router(chat.router)
-
 
 # Include the get_chat_logs router
 app.include_router(get_chat_logs.router)

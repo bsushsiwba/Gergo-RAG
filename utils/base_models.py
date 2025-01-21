@@ -1,7 +1,30 @@
 # This file defines all the base models for the fastapi
 
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
+
+
+class MultilingualQuestionRequest(BaseModel):
+    question_en: Optional[str] = Field(None, description="Question in English.")
+    answer_en: Optional[str] = Field(None, description="Answer in English.")
+
+    question_hu: Optional[str] = Field(None, description="Question in Hungarian.")
+    answer_hu: Optional[str] = Field(None, description="Answer in Hungarian.")
+
+    question_de: Optional[str] = Field(None, description="Question in German.")
+    answer_de: Optional[str] = Field(None, description="Answer in German.")
+
+    references: Optional[List[str]] = Field(None, description="List of reference URLs.")
+
+    def validate_languages(self):
+        if not (
+            (self.question_en and self.answer_en)
+            or (self.question_hu and self.answer_hu)
+            or (self.question_de and self.answer_de)
+        ):
+            raise ValueError(
+                "At least one pair of question and answer must be provided in the same language."
+            )
 
 
 class RateChatRequest(BaseModel):

@@ -101,3 +101,22 @@ def check_and_create_db_schema(client):
         logging.info(f"Created index {UNANSWERED_QUESTIONS_INDEX}")
     except:
         pass
+
+
+# function to update the index of the given collection
+def update_index(collection, index_name):
+    try:
+        new_index_definition = {"mappings": {"dynamic": True}}
+        collection.update_search_index(index_name, new_index_definition)
+        logging.info(f"Updated index {index_name}")
+    except Exception as e:
+        logging.error(e)
+    try:
+        index = {
+            "definition": {"mappings": {"dynamic": True}},
+            "name": index_name,
+        }
+        collection.create_search_index(index)
+        logging.info(f"Created index {index_name}")
+    except:
+        pass
