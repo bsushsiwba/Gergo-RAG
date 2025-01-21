@@ -4,8 +4,7 @@ from pymongo import MongoClient, errors
 import logging
 from utils.databse_schema import check_and_create_db_schema
 
-from routers import chat
-from routers import get_chat_logs
+from routers import home, chat, get_chat_logs
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -37,9 +36,8 @@ async def shutdown_event():
         client = None
 
 
-@app.get("/")
-async def welcome():
-    return "The site is running correctly, use chat endpoint."
+# include home router
+app.include_router(home.router)
 
 
 # Include the chat router

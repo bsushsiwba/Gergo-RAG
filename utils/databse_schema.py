@@ -7,10 +7,15 @@ from constants import *
 
 
 def check_and_create_db_schema(client):
+
+    # Counter variable later used to add a 5 second delay if a table is created before creating indexes
+    count = 0
+
     logging.basicConfig(level=logging.INFO)
     if DB_NAME not in client.list_database_names():
         logging.info("Database not found, creating database")
         db = client[DB_NAME]
+        count += 1
     else:
         logging.info("Database found")
         db = client[DB_NAME]
@@ -21,6 +26,7 @@ def check_and_create_db_schema(client):
         db.create_collection(CHAT_LOGS_COLLECTION)
         db[CHAT_LOGS_COLLECTION].insert_one({"dummy": "dummy"})
         db[CHAT_LOGS_COLLECTION].delete_one({"dummy": "dummy"})
+        count += 1
     else:
         logging.info("Chat Logs Collection found")
 
@@ -29,6 +35,7 @@ def check_and_create_db_schema(client):
         db.create_collection(MULTILINGUAL_QUESTIONS_COLLECTION)
         db[MULTILINGUAL_QUESTIONS_COLLECTION].insert_one({"dummy": "dummy"})
         db[MULTILINGUAL_QUESTIONS_COLLECTION].delete_one({"dummy": "dummy"})
+        count += 1
     else:
         logging.info("Multilingual Questions Collection found")
 
@@ -37,6 +44,7 @@ def check_and_create_db_schema(client):
         db.create_collection(UNANSWERED_QUESTIONS_COLLECTION)
         db[UNANSWERED_QUESTIONS_COLLECTION].insert_one({"dummy": "dummy"})
         db[UNANSWERED_QUESTIONS_COLLECTION].delete_one({"dummy": "dummy"})
+        count += 1
     else:
         logging.info("Unanswered Questions Collection found")
 
@@ -45,12 +53,15 @@ def check_and_create_db_schema(client):
         db.create_collection(REVIEW_QUESTIONS_COLLECTION)
         db[REVIEW_QUESTIONS_COLLECTION].insert_one({"dummy": "dummy"})
         db[REVIEW_QUESTIONS_COLLECTION].delete_one({"dummy": "dummy"})
+        count += 1
     else:
         logging.info("Review Questions Collection found")
 
     logging.info("Database setup complete")
 
-    time.sleep(5)
+    # If any collection is created, wait for 5 seconds to let the indexes be created
+    if count > 0:
+        time.sleep(5)
 
     # check if index exists
     collection = db[MULTILINGUAL_QUESTIONS_COLLECTION]
