@@ -41,7 +41,10 @@ system_prompt = "You are a friendly conversational chatbot who responds in the l
         "This endpoint allows users to chat with the AI assistant. It supports conversation context, maintains "
         "a memory buffer of recent interactions, and logs responses to the MongoDB database. If the question matches "
         "a predefined answer in the knowledge base, that response is returned immediately. Otherwise, the system generates "
-        "a new response using the LLM."
+        "a new response using the LLM. If the `id` parameter is provided and valid, the previous conversation context "
+        "associated with that `id` will be used to generate the response. If the `id` is not provided or invalid, a new "
+        "`id` will be generated, and the response will be based on the new context. Unanswered questions are stored "
+        "in the unanswered questions collection if not already present."
     ),
     response_model=ChatResponse,
     responses={
@@ -106,7 +109,7 @@ def chat_endpoint(
         db = db_client[DB_NAME]
         unanswered_questions = db[UNANSWERED_QUESTIONS_COLLECTION]
         update_index(unanswered_questions, UNANSWERED_QUESTIONS_INDEX)
-        
+
         # Retrieve or create chat context
         chat_id = request.id
         if not chat_id or chat_id not in chat_contexts:
