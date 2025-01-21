@@ -10,7 +10,7 @@ logging.basicConfig(
 )
 
 
-def chat_log(client, question, answer, chat_id, question_id):
+def chat_log(client, question, answer, chat_id, reference_question_id):
     """
     Logs the chat interaction into the Chat-Logs collection.
 
@@ -37,7 +37,7 @@ def chat_log(client, question, answer, chat_id, question_id):
             "question": question,
             "answer": answer,
             "chat_id": chat_id,
-            "refernced_question_id": question_id,
+            "refernced_question_id": reference_question_id,
             "timestamp": datetime.utcnow(),
         }
 
@@ -45,8 +45,11 @@ def chat_log(client, question, answer, chat_id, question_id):
         result = collection.insert_one(log_entry)
         if result.acknowledged:
             logging.info(f"Chat log successfully written with ID: {result.inserted_id}")
+            return str(result.inserted_id)
         else:
             logging.error("Failed to write chat log to the database.")
+            return None
 
     except Exception as e:
         logging.error(f"An error occurred while logging chat: {e}")
+        return None

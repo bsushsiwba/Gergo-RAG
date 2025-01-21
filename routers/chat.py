@@ -53,7 +53,7 @@ system_prompt = "You are a friendly conversational chatbot who responds in the l
                     "example": {
                         "id": "b37e6182-8b0b-4a82-9d10-d7f6ddc52fd3",
                         "response": "The significance of roles is that they align with later developed regulations...",
-                        "question_id": "677ec97711172d691541fa4c",
+                        "reference_question_id": "677ec97711172d691541fa4c",
                     }
                 }
             },
@@ -93,7 +93,7 @@ def chat_endpoint(
     global chat_contexts
 
     # Check knowledge base for predefined answer
-    question_id, predefined_answer = find_answer_in_knowledge_base(
+    reference_question_id, predefined_answer = find_answer_in_knowledge_base(
         db_client, request.question
     )
     if predefined_answer:
@@ -136,6 +136,11 @@ def chat_endpoint(
         del chat_contexts[oldest_context_id]
 
     # Log the response in the database
-    chat_log(db_client, request.question, response, chat_id, question_id)
+    log_id = chat_log(db_client, request.question, response, chat_id, reference_question_id)
 
-    return ChatResponse(id=chat_id, response=response, question_id=question_id)
+    return ChatResponse(
+        id=chat_id,
+        response=response,
+        reference_question_id=reference_question_id,
+        log_id=log_id,
+    )

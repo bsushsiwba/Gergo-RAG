@@ -24,7 +24,7 @@ router = APIRouter()
                 "- **question**: The user's question submitted to the system.\n"
                 "- **answer**: The system's response to the user's question.\n"
                 "- **chat_id**: Unique identifier for the chat session.\n"
-                "- **question_id**: Unique identifier for the specific question in the session.\n"
+                "- **reference_question_id**: Unique identifier for the specific question in the session.\n"
                 "- **timestamp**: ISO 8601 formatted timestamp indicating when the log entry was created."
             ),
             "content": {
@@ -35,7 +35,7 @@ router = APIRouter()
                             "question": "Mi a jelentősége a szerepköröknek?",
                             "answer": "Az keretrendszerben kialakított szerepkörök igazodnak a később kielekításra kerülő szabályozókhoz, ahol ezen szerepkörök kerülnek megjelenítésre.",
                             "chat_id": "b37e6182-8b0b-4a82-9d10-d7f6ddc52fd3",
-                            "question_id": "677ec97711172d691541fa4c",
+                            "reference_question_id": "677ec97711172d691541fa4c",
                             "timestamp": "2025-01-09T16:39:15.658000",
                         }
                     ]
