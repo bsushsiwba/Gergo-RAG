@@ -18,8 +18,9 @@ from langchain_groq import ChatGroq
 from pymongo import MongoClient
 from utils.chat_log import chat_log
 from utils.get_context import find_answer_in_knowledge_base
+from utils.databse_schema import update_index
 
-from constants import GROQ_API_KEY, MODEL, MAX_CONTEXTS
+from constants import *
 
 # Router instance
 router = APIRouter()
@@ -101,6 +102,11 @@ def chat_endpoint(
         # Ensure chat_id is set if predefined answer is found
         chat_id = request.id if request.id else str(uuid.uuid4())
     else:
+        # update index of unanswered questions
+        db = db_client[DB_NAME]
+        unanswered_questions = db[UNANSWERED_QUESTIONS_COLLECTION]
+        update_index(unanswered_questions, UNANSWERED_QUESTIONS_INDEX)
+        
         # Retrieve or create chat context
         chat_id = request.id
         if not chat_id or chat_id not in chat_contexts:
@@ -136,7 +142,9 @@ def chat_endpoint(
         del chat_contexts[oldest_context_id]
 
     # Log the response in the database
-    log_id = chat_log(db_client, request.question, response, chat_id, reference_question_id)
+    log_id = chat_log(
+        db_client, request.question, response, chat_id, reference_question_id
+    )
 
     return ChatResponse(
         id=chat_id,

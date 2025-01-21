@@ -1,8 +1,12 @@
 import logging
+
+
 from constants import (
     DB_NAME,
     MULTILINGUAL_QUESTIONS_COLLECTION,
     MULTILINGUAL_QUESTIONS_INDEX,
+    UNANSWERED_QUESTIONS_COLLECTION,
+    UNANSWERED_QUESTIONS_INDEX,
 )
 
 # MongoDB Atlas Search parameters
@@ -25,14 +29,36 @@ logging.basicConfig(
 
 def find_answer_in_knowledge_base(client, question):
     """Search for an exact match in the knowledge base."""
-    result, error_code = fetch_top_result(client, question)
+    result, error_code = fetch_top_result(
+        client,
+        question,
+        MULTILINGUAL_QUESTIONS_COLLECTION,
+        MULTILINGUAL_QUESTIONS_INDEX,
+        2,
+    )
     if error_code:
+        # adding to unanswered questions if not already present
+        result, error_code = fetch_top_result(
+            client,
+            question,
+            UNANSWERED_QUESTIONS_COLLECTION,
+            UNANSWERED_QUESTIONS_INDEX,
+            0.2,
+        )
+        if result is None:
+            unanswered_collection = client[DB_NAME][UNANSWERED_QUESTIONS_COLLECTION]
+            document = {"question": question}
+            unanswered_collection.insert_one(document)
+            logging.info(f"Added question to unanswered questions: '{question}'")
+            return ["", None]
+
+        logging.info(f"Found question in unanswered questions Already: '{question}'")
         return ["", None]
     else:
         return result
 
 
-def fetch_top_result(client, question):
+def fetch_top_result(client, question, db_collection, db_index, score_threshold):
     """
     Fetches the top result for a question using MongoDB aggregation pipeline.
 
@@ -51,18 +77,18 @@ def fetch_top_result(client, question):
             f"Accessing database: {DB_NAME}, collection: {MULTILINGUAL_QUESTIONS_COLLECTION}."
         )
         db = client[DB_NAME]
-        collection = db[MULTILINGUAL_QUESTIONS_COLLECTION]
+        collection = db[db_collection]
 
         # Define the aggregation pipeline
         pipeline = [
             {
                 "$search": {
-                    "index": MULTILINGUAL_QUESTIONS_INDEX,
+                    "index": db_index,
                     "text": {"query": question, "path": {"wildcard": SEARCH_PATH}},
                 }
             },
             {"$addFields": {"score": {"$meta": "searchScore"}}},
-            {"$match": {"score": {"$gt": SCORE_THRESHOLD}}},
+            {"$match": {"score": {"$gt": score_threshold}}},
             {"$sort": {"score": SORT_ORDER}},
             {"$limit": LIMIT},
         ]
