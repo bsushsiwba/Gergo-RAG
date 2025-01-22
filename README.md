@@ -1,65 +1,139 @@
 [![example-fastapi](https://github.com/koyeb/example-fastapi/actions/workflows/deploy.yaml/badge.svg)](https://github.com/koyeb/example-fastapi/actions)
 
-<div align="center">
-  <a href="https://koyeb.com">
-    <img src="https://www.koyeb.com/static/images/icons/koyeb.svg" alt="Logo" width="80" height="80">
-  </a>
-  <h3 align="center">Koyeb Serverless Platform</h3>
-  <p align="center">
-    Deploy a Python FastAPI application on Koyeb
-    <br />
-    <a href="https://koyeb.com">Learn more about Koyeb</a>
-    ·
-    <a href="https://koyeb.com/docs">Explore the documentation</a>
-    ·
-    <a href="https://koyeb.com/tutorials">Discover our tutorials</a>
-  </p>
-</div>
+# Chat Application
 
-## About Koyeb and the Python FastAPI example application
+## Table of Contents
+1. Introduction
+2. Features
+3. Data Flow
+4. Data Flow Architecture
+   - Chat Endpoint Flow
+   - Data Ingestion Flow
+5. Usage Guide
+    - Home Endpoint
+    - Chat Endpoint
+    - Add Context Endpoint
+    - Get Chat Logs Endpoint
+    - Review Chat Endpoint
+    - Delete Documents Endpoint
+6. Deployment
+    - Local Deployment
+    - Docker Deployment
+7. Swagger Documentation
 
-Koyeb is a developer-friendly serverless platform to deploy apps globally. No-ops, servers, or infrastructure management.
-This repository contains a Python FastAPI application you can deploy on the Koyeb serverless platform for testing.
+## Introduction
+Welcome to the Chat Application! This application allows users to interact with an AI assistant, store and retrieve chat logs, and manage multilingual questions and answers. The application uses MongoDB for data storage and supports multiple languages.
 
-This example application is designed to show how a Python FastAPI application can be deployed on Koyeb.
+## Features
+- Chat with an AI assistant
+- Store and retrieve chat logs
+- Add and manage multilingual questions and answers
+- Review and rate chat responses
+- Delete specific questions with ID's from particular collections for management purposes.
 
-## Getting Started
+## Data Flow
+1. **User Interaction:** Users interact with the AI assistant through the chat endpoint.
+2. **Data Storage:** Admin questions and AI responses are stored in MongoDB collections.
+3. **Multilingual Support:** Questions and answers can be added in multiple languages and are translated automatically.
+4. **Review and Rating:** Users can review and rate chat responses, which are stored for further analysis.
+5. **Data Retrieval:** Admin can retrieve chat logs and review questions as needed.
 
-Follow the steps below to deploy and run the Python FastAPI application on your Koyeb account.
+## Data Flow Architecture
 
-### Requirements
+### Chat Endpoint Flow
+```mermaid
+graph TD
+    A[User Request] --> B[/chat endpoint]
+    B --> C{Knowledge Base Match?}
+    C -->|Yes| D[Return Predefined Answer]
+    C -->|No| E[Forward to GROQ LLM]
+    E --> F[Generate Response] 
+    F --> G[Log Interaction]
+    D --> G
+    G --> H[Return to User]
+    H --> I{Review Question Match?}
+    I -->|Yes| J[Return Similar Answer]
+    I -->|No| K[Add to Review Questions]
+```
 
-You need a Koyeb account to successfully deploy and run this application. If you don't already have an account, you can sign-up for free [here](https://app.koyeb.com/auth/signup).
+### Data Ingestion Flow
+```mermaid
+graph TD
+    A[Admin Input] --> B[/add_multilingual_question]
+    B --> C[Validate Language Pairs]
+    C --> D[Translation Service]
+    D --> E[Store in MongoDB]
+    E --> F[Update Search Index]
+```
 
-### Deploy using the Koyeb button
+## Usage Guide
 
-The fastest way to deploy the Python FastAPI application is to click the **Deploy to Koyeb** button below.
+### Home Endpoint
+- **Purpose:** To check if the application is running correctly.
+- **Usage:** Access the root URL (`/`) of the application. You should see a message indicating that the site is running correctly.
 
-[![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com/deploy?type=git&repository=github.com/koyeb/example-fastapi&branch=main&name=fastapi-on-koyeb)
+### Chat Endpoint
+- **Purpose:** To interact with the AI assistant.
+- **Usage:** Send a POST request to the `/chat` endpoint with your question. The AI assistant will respond, and the conversation will be logged in the database. If the `id` parameter is provided and valid, the previous conversation context associated with that `id` will be used to generate the response. If the `id` is not provided or invalid, a new `id` will be generated, and the response will be based on the new context. Unanswered questions are stored in the unanswered questions collection if not already present.
 
-Clicking on this button brings you to the Koyeb App creation page with everything pre-set to launch this application.
+### Add Context Endpoint
+- **Purpose:** To add questions and answers in multiple languages.
+- **Usage:** Send a POST request to the `/add_multilingual_question` endpoint with your question and answer in the desired languages. The application will translate and store them in the database.
 
-_To modify this application example, you will need to fork this repository. Checkout the [fork and deploy](#fork-and-deploy-to-koyeb) instructions._
+### Get Chat Logs Endpoint
+- **Purpose:** To retrieve chat logs from the past X hours or all logs if no parameter is provided.
+- **Usage:** Send a GET request to the `/get_chat_logs` endpoint with an optional `hours` parameter to filter logs from the past X hours.
 
-### Fork and deploy to Koyeb
+### Review Chat Endpoint
+- **Purpose:** To add a chat log to the Review-Questions collection for further review.
+- **Usage:** Send a POST request to the `/rate_chat` endpoint with the log ID of the chat you want to review. The chat log will be added to the Review-Questions collection.
 
-If you want to customize and enhance this application, you need to fork this repository.
+### Delete Documents Endpoint
+- **Purpose:** To delete a specific review question by ID.
+- **Usage:** Send a DELETE request to the `/review_questions/{id}` endpoint with the ID of the review question you want to delete.
 
-If you used the **Deploy to Koyeb** button, you can simply link your service to your forked repository to be able to push changes.
-Alternatively, you can manually create the application as described below.
+## Deployment
 
-On the [Koyeb Control Panel](https://app.koyeb.com/), on the **Overview** tab, click the **Create Web Service** button to begin.
+### Local Deployment
+1. **Install Dependencies:**
+    - Ensure you have Python installed.
+    - Install the required dependencies using the following command:
+      ```sh
+      pip install -r requirements.txt
+      ```
 
-1. Select **GitHub** as the deployment method.
-2. In the repositories list, select the repository you just forked.
-3. Choose a name for your App and Service, i.e `fastapi-on-koyeb`, and click **Deploy**.
+2. **Run the Application:**
+    - Start the application using the following command:
+      ```sh
+      uvicorn main:app --reload
+      ```
+    - The application will be available at `http://127.0.0.1:8000`.
 
-You land on the deployment page where you can follow the build of your FastAPI application. Once the build has completed, your application is deployed and you will be able to access it via `<YOUR_APP_NAME>-<YOUR_ORG_NAME>.koyeb.app`.
+### Docker Deployment
+1. **Build the Docker Image:**
+    - Build the Docker image using the following command:
+      ```sh
+      docker build -t fastapi-chat-app .
+      ```
+
+2. **Run the Docker Container:**
+    - Run the Docker container using the following command:
+      ```sh
+      docker run -p 8000:8000 fastapi-chat-app
+      ```
+
+3. **Using Docker Compose:**
+    - Alternatively, you can use Docker Compose to build and run the application:
+      ```sh
+      docker-compose up --build
+      ```
+    - The application will be available at `http://127.0.0.1:8000`.
+
+## Swagger Documentation
+You can access the Swagger documentation for all endpoints at the `/docs` endpoint. This provides an interactive interface to test and understand the API endpoints.
+
+Thank you for using the Chat Application! If you have any questions or need further assistance, please refer to the documentation or contact support.
 
 ## Contributing
 
 If you have any questions, ideas or suggestions regarding this application sample, feel free to open an [issue](//github.com//koyeb/example-fastapi/issues) or fork this repository and open a [pull request](//github.com/koyeb/example-fastapi/pulls).
-
-## Contact
-
-[Koyeb](https://www.koyeb.com) - [@gokoyeb](https://twitter.com/gokoyeb) - [Slack](http://slack.koyeb.com/) - [Community](https://community.koyeb.com/)
