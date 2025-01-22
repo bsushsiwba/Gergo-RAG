@@ -7,12 +7,13 @@ from constants import (
     MULTILINGUAL_QUESTIONS_INDEX,
     UNANSWERED_QUESTIONS_COLLECTION,
     UNANSWERED_QUESTIONS_INDEX,
+    SCORE_THRESHOLD_MULTILINGUAL,
+    SCORE_THRESHOLD_UNANSWERED,
 )
 
 # MongoDB Atlas Search parameters
 
 SEARCH_PATH = "*"
-SCORE_THRESHOLD = 2
 SORT_ORDER = -1
 LIMIT = 1
 
@@ -34,7 +35,7 @@ def find_answer_in_knowledge_base(client, question):
         question,
         MULTILINGUAL_QUESTIONS_COLLECTION,
         MULTILINGUAL_QUESTIONS_INDEX,
-        2,
+        SCORE_THRESHOLD_MULTILINGUAL,
     )
     if error_code:
         # adding to unanswered questions if not already present
@@ -43,7 +44,7 @@ def find_answer_in_knowledge_base(client, question):
             question,
             UNANSWERED_QUESTIONS_COLLECTION,
             UNANSWERED_QUESTIONS_INDEX,
-            0.2,
+            SCORE_THRESHOLD_UNANSWERED,
         )
         if result is None:
             unanswered_collection = client[DB_NAME][UNANSWERED_QUESTIONS_COLLECTION]

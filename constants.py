@@ -24,6 +24,10 @@ MODEL = "llama3-8b-8192"
 # Maximum number of chats to store for different users
 MAX_CONTEXTS = 5
 
+# Score thresholds
+SCORE_THRESHOLD_MULTILINGUAL = 1.5
+SCORE_THRESHOLD_UNANSWERED = 0.2
+
 # DB Constants
 DB_NAME = "RAG-index"
 CHAT_LOGS_COLLECTION = "Chat-Logs"
