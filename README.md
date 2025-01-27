@@ -119,7 +119,7 @@ graph TD
 2. **Run the Docker Container:**
     - Run the Docker container using the following command:
       ```sh
-      docker run -p 8000:8000 fastapi-chat-app
+      docker run --network="host" fastapi-chat-app
       ```
 
 3. **Using Docker Compose:**

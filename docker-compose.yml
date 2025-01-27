@@ -1,4 +1,4 @@
-version: '3.8'
+version: '2.4'
 
 services:
   app:
@@ -6,6 +6,5 @@ services:
     container_name: my_fastapi_container  # Name of the container
     env_file:
       - .env  # Load environment variables from a .env file
-    ports:
-      - "8000:8000"  # Map host port 8000 to container port 8000
+    network_mode: host  # Use the host's network stack
     command: uvicorn app:app --host 0.0.0.0 --port 8000  # Command to run the app
