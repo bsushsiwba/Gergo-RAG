@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pymongo import MongoClient
 import uuid
 
@@ -15,6 +15,8 @@ from langchain_core.prompts import (
 from langchain_core.messages import SystemMessage
 from langchain.chains.conversation.memory import ConversationBufferWindowMemory
 from langchain_groq import ChatGroq
+from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 from pymongo import MongoClient
 from utils.chat_log import chat_log
 from utils.get_context import find_answer_in_knowledge_base
@@ -28,8 +30,24 @@ router = APIRouter()
 # Chat contexts
 chat_contexts = {}
 
-# define GROQ chat instance
-groq_chat = ChatGroq(groq_api_key=GROQ_API_KEY, model_name=MODEL)
+# define chat instance based on available API KEY and MODEL
+try:
+    chat_instance = ChatGroq(
+        groq_api_key=GROQ_API_KEY, model_name=MODEL, temperature=MODEL_TEMPERATURE
+    )
+except Exception as e:
+    print(f"GROQ Instance Error: {e}")
+try:
+    chat_instance = ChatOpenAI(
+        model=MODEL, temperature=MODEL_TEMPERATURE, max_retries=2
+    )
+except Exception as e:
+    print(f"OpenAI Instance Error: {e}")
+try:
+    chat_instance = ChatGoogleGenerativeAI(model=MODEL, temperature=MODEL_TEMPERATURE)
+except Exception as e:
+    print(f"Google Generative AI Instance Error: {e}")
+
 
 system_prompt = "You are a friendly conversational chatbot who responds in the language of the user."
 
@@ -59,6 +77,14 @@ system_prompt = "You are a friendly conversational chatbot who responds in the l
                         "response": "The significance of roles is that they align with later developed regulations...",
                         "reference_question_id": "677ec97711172d691541fa4c",
                     }
+                }
+            },
+        },
+        404: {
+            "description": "Question not found in knowledge base",
+            "content": {
+                "application/json": {
+                    "example": {"detail": "Question not found in knowledge base"}
                 }
             },
         },
@@ -109,35 +135,45 @@ def chat_endpoint(
         db = db_client[DB_NAME]
         unanswered_questions = db[UNANSWERED_QUESTIONS_COLLECTION]
         update_index(unanswered_questions, UNANSWERED_QUESTIONS_INDEX)
-
-        # Retrieve or create chat context
-        chat_id = request.id
-        if not chat_id or chat_id not in chat_contexts:
-            chat_id = str(uuid.uuid4())
-            memory = ConversationBufferWindowMemory(
-                k=5, memory_key="chat_history", return_messages=True
-            )
-            chat_contexts[chat_id] = memory
-        else:
-            memory = chat_contexts[chat_id]
-
-        # Construct prompt and conversation chain
-        prompt = ChatPromptTemplate.from_messages(
-            [
-                SystemMessage(content=system_prompt),
-                MessagesPlaceholder(variable_name="chat_history"),
-                HumanMessagePromptTemplate.from_template("{human_input}"),
-            ]
+        raise HTTPException(
+            status_code=404, detail=f"Question not found in knowledge base"
         )
 
-        conversation = LLMChain(
-            llm=groq_chat,
-            prompt=prompt,
-            verbose=False,
-            memory=memory,
-        )
+    # create system prompt
+    system_prompt = f"""You are a friendly conversational chatbot who responds in the language of the user.
+Use the following information to answer the user's question:
+{response}
 
-        response = conversation.predict(human_input=request.question)
+And keep your answer to the point unless the user asks for more details."""
+
+    # Retrieve or create chat context
+    chat_id = request.id
+    if not chat_id or chat_id not in chat_contexts:
+        chat_id = str(uuid.uuid4())
+        memory = ConversationBufferWindowMemory(
+            k=5, memory_key="chat_history", return_messages=True
+        )
+        chat_contexts[chat_id] = memory
+    else:
+        memory = chat_contexts[chat_id]
+
+    # Construct prompt and conversation chain
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            SystemMessage(content=system_prompt),
+            MessagesPlaceholder(variable_name="chat_history"),
+            HumanMessagePromptTemplate.from_template("{human_input}"),
+        ]
+    )
+
+    conversation = LLMChain(
+        llm=chat_instance,
+        prompt=prompt,
+        verbose=False,
+        memory=memory,
+    )
+
+    response = conversation.predict(human_input=request.question)
 
     # Maintain only defined maximum contexts
     if len(chat_contexts) > MAX_CONTEXTS:
@@ -151,7 +187,7 @@ def chat_endpoint(
 
     return ChatResponse(
         id=chat_id,
-        response=response,
+        response=response.strip(),
         reference_question_id=reference_question_id,
         log_id=log_id,
     )

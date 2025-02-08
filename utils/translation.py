@@ -1,19 +1,46 @@
 # This is the translation utility that will be used to translate the questions and answers to different languages.
 
 import os
-from constants import MODEL
+from constants import *
 from groq import Groq
+from openai import OpenAI
+from google import genai
 
-client = Groq(
-    api_key=os.environ.get("GROQ_API_KEY"),
-)
+# Track which API is active
+ACTIVE_API = None
+
+# USE client based on the API KEY and MODEL
+if os.environ.get("GROQ_API_KEY") != None:
+    client = Groq(
+        api_key=os.environ.get("GROQ_API_KEY"),
+    )
+    ACTIVE_API = "groq"
+    print("GROQ Instance Created")
+elif os.environ.get("OPENAI_API_KEY") != None:
+    client = OpenAI(
+        api_key=os.environ.get("OPENAI_API_KEY"),
+    )
+    ACTIVE_API = "openai"
+    print("OpenAI Instance Created")
+elif os.environ.get("GOOGLE_API_KEY") != None:
+    client = genai.Client(api_key=os.environ.get("GOOGLE_API_KEY"))
+    ACTIVE_API = "google"
+    print("Google Generative AI Instance Created")
+else:
+    print(f"LLM Error: API Key not found")
 
 
 def translate_text(text: str, source_lang: str, target_lang: str) -> str:
     """
-    Translate text from source_lang to target_lang using the GROQ model.
+    Translate text from source_lang to target_lang using the language model.
     """
     prompt = f"Translate the following text from {source_lang} to {target_lang} and only give translation in output and nothing else:\n\n{text}"
+
+    if ACTIVE_API == "google":
+        response = client.models.generate_content(model=MODEL, contents=prompt)
+        return response.text.strip()
+
+    # Default behavior for OpenAI and Groq
     chat_completion = client.chat.completions.create(
         messages=[
             {

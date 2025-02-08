@@ -18,8 +18,18 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 # Error codes
 ERROR_CODE_CONNECTION_FAILED = "ERR_CONNECTION_FAILED"
 
+# uncomment the model you want to use
 # GROQ Model
-MODEL = "llama3-8b-8192"
+# MODEL = "llama-3.3-70b-versatile"
+
+# OPENAI Model
+# MODEL = "gpt-4o-mini"
+
+# GEMINI Model
+MODEL = "gemini-2.0-flash"
+
+# MODEL TEMPERATURE
+MODEL_TEMPERATURE = 0
 
 # Maximum number of chats to store for different users
 MAX_CONTEXTS = 5

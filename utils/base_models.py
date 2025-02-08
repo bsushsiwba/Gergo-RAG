@@ -42,11 +42,16 @@ class ChatRequest(BaseModel):
     id: str = None
 
 
+class ErrorResponse(BaseModel):
+    status_code: int = Field(..., description="HTTP status code of the error")
+    detail: str = Field(..., description="Detailed error message")
+
+
 class ChatResponse(BaseModel):
     id: str
     response: str
-    reference_question_id: str = None
-    log_id: str = None
+    reference_question_id: Optional[str] = None
+    log_id: Optional[str] = None
 
 
 # Pydantic model for the response schema with detailed parameter descriptions
